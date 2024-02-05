@@ -1,0 +1,4 @@
+[core]
+    remote = expertgdrive
+['remote "expertgdrive"']
+    url = gdrive://1z7Rf8xWmYDRJ73UHJcq779mIkHRqyP3W

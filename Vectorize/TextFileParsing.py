@@ -45,12 +45,11 @@ def process_chunks(data):
 
 #Create a function to convert the [[chunk1, chunk2, chunk3, ...], [chunk1, chunk2, chunk3, ...], ...] into list of [[embedding1, embedding2, embedding3, ...], [embedding1, embedding2, embedding3, ...], ...]
 def convert_to_embeddings(data):
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    model = SentenceTransformer('all-mpnet-base-v2')
 
     embeddings = []
     for chunk in data:
         embeddings.append(model.encode(chunk))
-    print(len(embeddings[0]))
     return embeddings
 
 def get_milvus_client(endpoint, key):
