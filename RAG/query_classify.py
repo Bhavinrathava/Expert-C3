@@ -12,8 +12,17 @@ def predict_query_label(query):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     inputs = tokenizer(query, padding=True, truncation=True, max_length=512)
-    input_ids = inputs['input_ids'].to(device)
-    attention_mask = inputs['attention_mask'].to(device)
+
+    # if tokenizer returns a list, take the first element
+    if isinstance(inputs, list):
+        inputs = inputs[0]
+
+    # move input tensors to the device
+    input_ids = torch.tensor(inputs['input_ids']).unsqueeze(0).to(device)
+    attention_mask = torch.tensor(inputs['attention_mask']).unsqueeze(0).to(device)
+    
+    #input_ids = inputs['input_ids'].to(device)
+    #attention_mask = inputs['attention_mask'].to(device)
     
     # perform inference
     with torch.no_grad():
@@ -26,3 +35,9 @@ def predict_query_label(query):
     predicted_label = torch.argmax(probabilities, dim=1).item()
     
     return predicted_label
+
+if __name__ == '__main__':
+    #get answer from RAG
+    query = "What is northwestern University's policy on Gifts?"
+    label = predict_query_label(query)
+    print(label)
