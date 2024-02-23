@@ -2,7 +2,7 @@ import chainlit as cl
 
 ### To run this:
 #### 1. pip install chainlit pymilvus sentence-transformers openai
-#### 2. open terminal, navigate to directory, enter: "chainlit run testBot.py -w"
+#### 2. open terminal, navigate to directory, enter: "chainlit run app.py -w"
 #### 3. open http://localhost:8000/ 
 from ragFlow import getAnswerWithRag
 from query_classify import predict_query_label
