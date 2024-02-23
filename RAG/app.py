@@ -5,6 +5,7 @@ import chainlit as cl
 #### 2. open terminal, navigate to directory, enter: "chainlit run testBot.py -w"
 #### 3. open http://localhost:8000/ 
 from ragFlow import getAnswerWithRag
+from query_classify import predict_query_label
 
 ########################################
 from openai import OpenAI
@@ -32,9 +33,8 @@ async def main(message: cl.Message):
         content=res,
     ).send()
 
-
 def classifier(query):
-    return False #To be implemented
+    return predict_query_label(query)
 
 def rag_call(query):
     return getAnswerWithRag(query)
