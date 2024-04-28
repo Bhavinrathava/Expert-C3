@@ -2,7 +2,10 @@
 '''
 Here we want to create a functionality that will allow us to convert user query into a mongo query.
 '''
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
+from functools import lru_cache
 import re
 #import pymongo
 import ollama
@@ -35,7 +38,7 @@ class MongoAgent:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = self.model.to(self.device)
 
-
+    @lru_cache(maxsize=100)
     def getAnswer(self):
         '''
         This function will call all the functions in the class and return the answer.
