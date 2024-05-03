@@ -15,6 +15,7 @@ import torch
 from langchain.prompts import PromptTemplate
 from langchain_community.chat_models import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
+from langchain_community.llms import ollama
 
 from nl2query import MongoQuery
 from pymongo import MongoClient # import if performing analysis using python client
@@ -31,7 +32,7 @@ class MongoAgent:
         self.answer = None
         self.ollamaModelName = ollamaModelName
         
-        ollama.pull(ollamaModelName)
+        #ollama.pull(ollamaModelName)
 
         self.model = AutoModelForSeq2SeqLM.from_pretrained("Chirayu/nl2mongo")
         self.tokenizer = AutoTokenizer.from_pretrained("Chirayu/nl2mongo")
@@ -54,7 +55,7 @@ class MongoAgent:
         modelName = self.modelName
         userQuery = self.userQuery
         mongoQuestion = self.mongoQuestion
-        queryfier = MongoQuery( collection_keys = keys, collection_name = collectionName)
+        queryfier = MongoQuery(model_type=modelName, collection_keys = keys, collection_name = collectionName)
         query = queryfier.generate_query(mongoQuestion)
         print("Query: ", query)
         self.mongoQuery = query
@@ -92,18 +93,27 @@ class MongoAgent:
         uri = "mongodb+srv://bhavinmongocluster.5t6smyb.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BhavinMongoCluster"
         client = MongoClient(uri,
                         tls=True,
-                        tlsCertificateKeyFile='config/X509-cert-2395346324095207188.pem')
+                        tlsCertificateKeyFile='config/X509-cert-437627430738855748.pem')
         db = client['Yelp']
         collection = db[self.collectionName]
         print("Collection: ", collection)
         print("Find Dict: ", find_dict)
         print("Projection Dict: ", projection_dict)
 
-        query_result = collection.find(find_dict)
+        query_result = collection.find(find_dict, {'_id':0})
         self.data = list(query_result)
         print("Data: ", self.data)
         return self.data
 
+    def getData(self):
+        print(f"Building Mongo Query with the question: {self.mongoQuestion} \n")
+        self.build_mongo_query()
+        print(f'Generated MongoDB query: {self.mongoQuery} \n')
+
+        print("Executing Mongo Query...")
+        self.execute_mongo_query()
+        return self.data
+    
     def build_answer(self):
         '''
         This function will take in the data and the original query and build an answer.
@@ -118,7 +128,7 @@ class MongoAgent:
         input_variables=["question", "document"],
         )
 
-        llm = ChatOllama(model=self.ollamaModelName, temperature=0)
+        llm = ChatOllama(model=self.ollamaModelName, base_url="https://ollama-container:11434",temperature=0)
         
         print("Initialising the chain...")
         rag_chain = prompt | llm | StrOutputParser()
@@ -141,5 +151,7 @@ def main():
     agent = MongoAgent(keys = keys, collectionName = collectionName, modelName = modelName, userQuery = userQuery, mongoQuestion = mongoQuestion)
     answer = agent.getAnswer()
     print("Answer: ", answer)
+
+
 if __name__ == "__main__":
     main()

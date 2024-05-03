@@ -1,0 +1,10 @@
+torch
+fastapi 
+pymongo 
+nl2query
+ollama
+langchain 
+langchain_community 
+langchain_core
+transformers
+uvicorn

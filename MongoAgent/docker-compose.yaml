@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  myapi:
+    image: mongoapi
+    ports:
+      - "8000:8000"
+    networks:
+      - my-network
+    depends_on:
+      - ollama-container
+
+  ollama-container:
+    image: ollama/ollama
+    volumes:
+      - ollama_volume:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - my-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  my-network:
+
+volumes:
+  ollama_volume:
