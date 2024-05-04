@@ -1,0 +1,12 @@
+MongoConfig:
+  collectionName: "test"
+  keys:
+    - "key1"
+    - "key2"
+    - "key3"
+  modelName: "T5"
+  baseURL: "http://localhost:8000"
+  dbName: "test"
+
+LLAMAConfig:
+  baseURL: "http://localhost:8000" 
