@@ -10,6 +10,7 @@ import requests
 
 from Query_Breakdown import query_breakdown 
 from RAG.ragFlow import getAnswerWithRag
+import os 
 
 def generate_final_answers(query_domain_mapping):
     final_answer = ""
@@ -27,8 +28,11 @@ def get_answer(user_query, chat_history):
             
         
         elif query_domain["Domain"] == "Events":
+            if(os.environ.get("MONGO_API_URI") == None):
+                raise ValueError("Please set the MONGO_API_URI environment variable.")
+            
             # send the query to mongo seq2sql and get data for the question 
-            base_url = "http://localhost:8000/"
+            base_url = os.environ.get("MONGO_API_URI")
             data = {
                 # Title, day, time, desc, location, contact, reg_link
                 "keys": ['Title', 'Day', 'Time', 'Desc', 'Location', 'Contact', 'Reg_link'],
@@ -38,18 +42,13 @@ def get_answer(user_query, chat_history):
                 "mongoQuestion": query_domain["query"]
             }
             
-            response = requests.post(base_url + "create_agent/", json=data)
+            answerJSON = requests.post(base_url+"get_data/", data=data)
 
-            if(response.status_code == 200):
-                answerJSON = requests.get(base_url+"get_data/", params={"question": user_query})
-
-                if(answerJSON.status_code == 200):
-                    query_domain["answer"] = answerJSON.json()["answer"]
-                else:
-                    print("Error in getting data from MongoAgent")
-                    query_domain["answer"] = "Error in getting data from MongoAgent"
+            if(answerJSON.status_code == 200):
+                query_domain["answer"] = answerJSON.json()["answer"]
             else:
                 print("Error in getting data from MongoAgent")
                 query_domain["answer"] = "Error in getting data from MongoAgent"
+        
     
     return generate_final_answers(query_domain_mapping)

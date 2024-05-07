@@ -13,7 +13,9 @@ domain_description = {
 
 # Return a list [{"Query":subquestion, "Domain": domain_name}, ...]
 def query_breakdown(user_question):
-    client = OpenAI(api_key="")
+    assert os.get("OPENAI_API_KEY") != None, "Please set your OpenAI API key in the environment variable 'OPENAI_API_KEY'"
+
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
    
     domains = "\n\nDomains:\n"
     for domain, description in domain_description.items():
@@ -33,8 +35,11 @@ def query_breakdown(user_question):
 
     success = False
     while not success:
+        if(os.get("OPENAI_MODEL") == None):
+            os.environ["OPENAI_MODEL"] = "gpt-3.5-turbo"
+
         response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model=os.getenv("OPENAI_MODEL"),
                     messages=[{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": prompt}],)
         responses = response.choices[0].message.content
         

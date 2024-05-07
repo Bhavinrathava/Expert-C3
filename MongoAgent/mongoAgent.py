@@ -21,7 +21,7 @@ from nl2query import MongoQuery
 from pymongo import MongoClient # import if performing analysis using python client
 import json 
 class MongoAgent:
-    def __init__(self, ollamaModelName = "llama3", keys = None, collectionName = None, modelName = "T5", userQuery = None, mongoQuestion = None):
+    def __init__(self, mongodb = "yelp", ollamaModelName = "llama3", keys = None, collectionName = None, modelName = "T5", userQuery = None, mongoQuestion = None):
         self.keys = keys
         self.collectionName = collectionName
         self.modelName = modelName
@@ -31,13 +31,13 @@ class MongoAgent:
         self.data = None
         self.answer = None
         self.ollamaModelName = ollamaModelName
-        
+        self.mongodb = mongodb
         #ollama.pull(ollamaModelName)
 
         self.model = AutoModelForSeq2SeqLM.from_pretrained("Chirayu/nl2mongo")
         self.tokenizer = AutoTokenizer.from_pretrained("Chirayu/nl2mongo")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = self.model.to(self.device)
+        self.model = self.model.to(self.device)
 
     @lru_cache(maxsize=100)
     def getAnswer(self):
@@ -53,7 +53,6 @@ class MongoAgent:
         keys = self.keys
         collectionName = self.collectionName
         modelName = self.modelName
-        userQuery = self.userQuery
         mongoQuestion = self.mongoQuestion
         queryfier = MongoQuery(model_type=modelName, collection_keys = keys, collection_name = collectionName)
         query = queryfier.generate_query(mongoQuestion)
@@ -90,11 +89,15 @@ class MongoAgent:
             find_dict[key] = find_dict[key].capitalize()
 
         # Executing the parsed query
-        uri = "mongodb+srv://bhavinmongocluster.5t6smyb.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=BhavinMongoCluster"
+        assert os.environ.get("MONGO_URI") is not None, "Please set the MONGO_URI environment variable."
+        assert os.environ.get("MONGO_CONFIG_PATH") is not None, "Please set the MONGO_CONFIG_PATH environment variable."
+        uri = os.environ.get("MONGO_URI")
+
         client = MongoClient(uri,
                         tls=True,
-                        tlsCertificateKeyFile='config/X509-cert-437627430738855748.pem')
-        db = client['Yelp']
+                        tlsCertificateKeyFile=os.environ.get("MONGO_CONFIG_PATH"))
+        
+        db = client[self.mongodb]
         collection = db[self.collectionName]
         print("Collection: ", collection)
         print("Find Dict: ", find_dict)
@@ -127,8 +130,10 @@ class MongoAgent:
         Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
         input_variables=["question", "document"],
         )
+        
+        assert os.environ.get("OLLAMA_BASE_URL") is not None, "Please set the OLLAMA_BASE_URL environment variable."
 
-        llm = ChatOllama(model=self.ollamaModelName, base_url="https://ollama-container:11434",temperature=0)
+        llm = ChatOllama(model=self.ollamaModelName, base_url=os.environ.get("OLLAMA_BASE_URL"),temperature=0)
         
         print("Initialising the chain...")
         rag_chain = prompt | llm | StrOutputParser()
